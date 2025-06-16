@@ -1,31 +1,28 @@
-// 1. custom-world.ts
-// Mục đích: Định nghĩa World class – đó là đối tượng chung (context) được truyền vào tất cả các step definitions dưới dạng this.
-
-// Nội dung chính:
-
-// Kế thừa từ World của Cucumber, thêm các property như browser, context, page.
-
-// Cho phép bạn lưu reference tới trình duyệt, ngữ cảnh (browser context) và trang (page) để reuse trong các bước test.
-
-// Tác dụng: Mỗi scenario sẽ được cấp một instance của CustomWorld, nên các step có thể truy cập this.page, this.browser dễ dàng.
-
-
-
-//??????? VẪN KHÔNG HIỂU
-
-// support/custom-world.ts
-
 import { setWorldConstructor, World, IWorldOptions } from '@cucumber/cucumber';
-import type { BrowserContext, Page } from 'playwright';
+import { Browser, Page, BrowserContext, chromium } from 'playwright';
+import { LoginPage } from '../pages/login.page';
 
 export class CustomWorld extends World {
-    public context!: BrowserContext;
-    public page!: Page;
+    browser!: Browser;
+    context!: BrowserContext;
+    page!: Page;
+    loginPage!: LoginPage;
 
     constructor(options: IWorldOptions) {
         super(options);
     }
+
+    async init() {
+        this.context = await this.browser.newContext();
+        this.page = await this.context.newPage();
+        this.loginPage = new LoginPage(this.page); // ✅ Inject page object
+    }
+
+    async close() {
+        await this.page?.close();
+        await this.context?.close();
+        await this.browser?.close();
+    }
 }
 
 setWorldConstructor(CustomWorld);
-

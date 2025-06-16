@@ -1,10 +1,23 @@
-import { Page } from '@playwright/test'; // không hiểu
+import { Page, expect } from '@playwright/test'; // không hiểu
 // không hiểu
 export class LoginPage {
-  constructor(private page: Page) {}
+  constructor(private page: Page) { }
 
-  async goto() {
+  async navigate() {
     await this.page.goto('https://d500vjs0cgrq8.cloudfront.net/login'); // Tại sao không thấy kí tự => khi dùng arrow function
+  }
+
+  async enterPhone(phone: string) {
+    await this.page.locator('#phone').fill(phone);
+    await this.page.getByRole('button', { name: 'Đăng nhập' }).click();
+  }
+
+  async enterOtp(code: string) {
+    await this.page.locator('input[placeholder="Nhập mã"]').fill(code);
+  }
+
+  async isLoginSuccess(message: string) {
+    await expect(this.page.getByText(message, { exact: false })).toBeVisible();
   }
 
   async mockOtpLoginSuccess() {
@@ -23,15 +36,5 @@ export class LoginPage {
         body: JSON.stringify({ token: 'mock-token', user: { name: 'admin' } })
       });
     });
-  }
-
-  async enterPhone(phone: string) {
-    await this.page.fill('#phone-input', phone);
-    await this.page.click('#request-otp-btn');
-  }
-
-  async enterOtp(code: string) {
-    await this.page.fill('#otp-input', code);
-    await this.page.click('#submit-otp-btn');
   }
 }
