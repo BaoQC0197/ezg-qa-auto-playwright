@@ -1,60 +1,30 @@
+// ✅ login.steps.ts (chỉ mock verify-otp, không mock check-phone)
 import { Given, When, Then } from '@cucumber/cucumber';
-import { expect } from '@playwright/test';
 import type { CustomWorld } from '../../support/custom-world';
-
-
-// Scenario Outline: Failed login with invalid or expired OTP
-//   When I fill in phone "0123456789"
-//   And I input OTP code <otpType> "<otp>"
-//   Then I should see an error message "<errorMessage>"
-
-//   Examples:
-//     | otpType    | otp    | errorMessage                        |
-//     | is invalid | 000000 | Mã OTP không khớp, vui lòng nhập lại|
-//     | is expired | 123456 | Mã OTP này đã hết hiệu lực. Vui lòng kiểm tra lại|
-
+import { mockLoginOtp } from '../../support/mock.service';
 
 Given('I navigate the login page', async function (this: CustomWorld) {
-  await this.loginPage.navigate();
+  await this.login.navigate();
 });
 
+// ✅ Dùng API thật để kiểm tra số điện thoại đã đăng ký
 When('I login with phone {string}', async function (this: CustomWorld, phone: string) {
-  await this.loginPage.enterPhone(phone);
+  console.log('STEP MATCHED: login with phone');
+  await this.login.enterPhone(phone);
 });
 
-When('I input OTP code is valid {string}', async function (this: CustomWorld, otp: string) {
-  await this.loginPage.enterOtp(otp);
+// ✅ Chỉ mock verify-OTP
+When('I input {string} OTP {string}', async function (this: CustomWorld, otpType: string, otp: string) {
+  await mockLoginOtp(this.page, otpType as 'success' | 'invalid' | 'expired');
+  await this.login.enterOtp(otp);
 });
 
-Then('I should see the welcome message {string}', async function (this: CustomWorld, message: string) {
-  await this.loginPage.isLoginSuccess(message);
+// ✅ Dùng cho cả thông báo thành công & thất bại
+Then('I should see the message {string}', async function (this: CustomWorld, message: string) {
+  await this.login.seeMessage(message);
 });
 
-// When(
-//   /^I input OTP code (is valid|is invalid|is expired) "([^"]+)"$/,
-//   async function (this: CustomWorld, otpType: string, otp: string) {
-//     const loginPage = new LoginPage(this.page);
-
-//     const isValid = otpType === 'is valid';
-//     if (otpType === 'is valid') {
-//       await loginPage.mockVerifyOtpSuccess();
-//     } else if (otpType === 'is invalid') {
-//       await loginPage.mockVerifyOtpFailure('Mã OTP không khớp, vui lòng nhập lại');
-//     } else {
-//       await loginPage.mockVerifyOtpFailure('Mã OTP này đã hết hiệu lực. Vui lòng kiểm tra lại');
-//     }
-
-//     // bỏ click, sử dụng enterOtp với flag valid/invalid
-//     await loginPage.enterOtp(otp, isValid);
-//   }
-// );
-
-// Then('I should see the welcome message {string}', async function (this: CustomWorld, message: string) {
-//   // TODO: kiểm tra selector hiển thị welcome message
-//   await expect(this.page.locator('.welcome-message')).toContainText(message);
-// });
-
-// Then('I should see an error message {string}', async function (this: CustomWorld, errorMessage: string) {
-//   // TODO: kiểm tra selector hiển thị error message
-//   await expect(this.page.locator('.error-message')).toHaveText(errorMessage);
-// });
+// ✅ Không mock check-phone khi số chưa đăng ký → dùng API thật
+When('I login with unregistered phone {string}', async function (this: CustomWorld, phone: string) {
+  await this.login.enterPhone(phone);
+});
